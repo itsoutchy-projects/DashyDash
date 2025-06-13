@@ -34,6 +34,12 @@ def error(msg : str):
     log += res + "\n"
     print(res.replace("ERROR", f"{colours['error']}ERROR{bcolors.ENDC}"))
 
+def warn(msg : str):
+    global log
+    res = f"[{datetime.datetime.now().hour}:{datetime.datetime.now().minute}:{datetime.datetime.now().second}] WARN: {msg}"
+    log += res + "\n"
+    print(res.replace("WARN", f"{colours['warn']}ERROR{bcolors.ENDC}"))
+
 def write():
     global log
     if log != "" and log != "\n": # we dont need to write a blank log. only write one if its necessary
