@@ -39,9 +39,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.getversion.outputs.version }}
-          release_name: ${{ github.event.commits[0].message }}
+          release_name: ${{ steps.getversion.outputs.version }} - ${{ github.event.commits[0].message }}
           body: |
-            Test Release ${{ steps.getversion.outputs.version }}
+            # Release ${{ steps.getversion.outputs.version }}
+            Changelog not added here since this was automated, sorry
           draft: false
           prerelease: true
       - name: Upload Release Asset
