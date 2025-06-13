@@ -150,7 +150,8 @@ def waitUntilKey(key, ucheck = True):
                     url = github.GetRelease(username, repo)["url"]
                     webbrowser.open(url)
 
-if network_utils.hasConnection():
+#if network_utils.hasConnection(): # no need, we good
+try:
     verResp = requests.get(f"https://raw.githubusercontent.com/{username}/{repo}/refs/heads/main/version.txt")
     githubVer = str(verResp._content).removeprefix("b'").removesuffix("'")
     localVer = ""
@@ -162,9 +163,11 @@ if network_utils.hasConnection():
         screen.blit(text, (cent.x, cent.y))
         pygame.display.flip()
         waitUntilKey(pygame.K_SPACE)
-    #endregion
-else:
+except:
     logger.warn("Couldn't get latest version because player has no WiFi")
+#endregion
+#else:
+    #logger.warn("Couldn't get latest version because player has no WiFi")
 
 while running:
     for e in pygame.event.get():
