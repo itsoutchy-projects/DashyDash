@@ -1,3 +1,2 @@
-python -m pip install pygame-ce
-python -m pip install pyinstaller
+python -m pip install -r requirements.txt
 echo "Done!"
