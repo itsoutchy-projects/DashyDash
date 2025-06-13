@@ -28,6 +28,9 @@ jobs:
       - name: Zip Release
         run: |
           tar acvf dist/game.zip dist/game
+      - name: Read VERSION file
+        id: getversion
+        run: echo "::set-output name=version::$(cat version.txt)"
 
       - name: create release
         id: create_release
@@ -35,10 +38,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v0.0.1
+          tag_name: ${{ steps.getversion.outputs.version }}
           release_name: ${{ github.event.commits[0].message }}
           body: |
-            Test Release v0.0.1
+            Test Release ${{ steps.getversion.outputs.version }}
           draft: false
           prerelease: true
       - name: Upload Release Asset
