@@ -24,7 +24,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Windows_Game
-          path: dist/game/game.exe
+          path: dist/game/
 
       - name: create release
         id: create_release
