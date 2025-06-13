@@ -9,6 +9,8 @@ import logger
 import os
 import sys
 import math
+import requests
+import webbrowser
 
 pygame.init()
 size = (1280, 720)
@@ -120,6 +122,33 @@ playerMovesCamera = True
 focused = True
 
 playerCamMovToggleWasPressed = False
+
+#region Update Checker
+def waitUntilKey(key, ucheck = True):
+    while True:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == key:
+                    return
+                if event.key == pygame.K_LSHIFT and ucheck:
+                    webbrowser.open("https://github.com/itsoutchy-projects/DashyDash/tree/main")
+
+verResp = requests.get("https://raw.githubusercontent.com/itsoutchy-projects/DashyDash/refs/heads/main/version.txt")
+githubVer = str(verResp._content).removeprefix("b'").removesuffix("'")
+localVer = ""
+with open("version.txt") as f:
+    localVer = f.read()
+if float(localVer.removeprefix("v")) < float(githubVer.removeprefix("v")):
+    text = fpsFont.render(f"{githubVer} is available!\n\nPress SPACE to continue or Press LEFT SHIFT to go to GitHub", True, "white")
+    cent = ScreenCenter(screen, text)
+    screen.blit(text, (cent.x, cent.y))
+    pygame.display.flip()
+    waitUntilKey(pygame.K_SPACE)
+#endregion
 
 while running:
     for e in pygame.event.get():
