@@ -12,6 +12,10 @@ import math
 import requests
 import webbrowser
 import github
+import pathlib
+
+if getattr(sys, 'frozen', False):
+    os.chdir(pathlib.Path(__file__).parent)
 
 pygame.init()
 size = (1280, 720)
@@ -114,7 +118,8 @@ class GameObject:
 
 objects = [
     GameObject(500, 360),
-    GameObject(1000, 200)
+    GameObject(1000, 200),
+    GameObject(400, 130)
 ]
 
 playerMovesCamera = True
@@ -217,17 +222,24 @@ while running:
                     if not player.y + player_size - window["height"] == window["height"] - groundHeight:
                         touchingGround = False
 
+                i = 0
                 for g in objects:
+                    # why is it only doing the first one???????????????????????????????????????????????????????????
+                    # pythonn pleaseplsplspls before i tear this code apart D:
+                    #g = objects[i]
                     pygame.draw.rect(screen, g.color, (g.x - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], g.width, g.height))
+                    print(((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and (player.y > g.y and player.y < g.y + g.height))
                     if (player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width:
                         #if player.x + player_size > g.x:
                         if player.y > g.y and player.y < g.y + g.height:
+                            print(f"collision detecting platform {i}")
                             logger.message("touching box :D")
                             player.y -= player.velocity
                             if playerMovesCamera:
                                 camera["y"] += player.velocity
                             player.velocity = 0
                             touchingGround = True
+                    i += 1
                 #print(touchingGround)
                 keys = pygame.key.get_pressed()
                 if keybinds.GetKeysPressed(keybinds.jump) and touchingGround:
@@ -259,6 +271,10 @@ while running:
                                 if playerMovesCamera:
                                     camera["x"] += player.speed * 2
                 if DEBUG:
+                    if keys[pygame.K_p]:
+                        player.gravity += 0.01
+                    if keys[pygame.K_SEMICOLON]:
+                        player.gravity -= 0.01
                     if keys[pygame.K_j]:
                         camera["x"] -= player.speed
                     if keys[pygame.K_l]:
@@ -277,14 +293,16 @@ while running:
                         playerCamMovToggleWasPressed = False
                     #region Debug Overlay
                     overlayTxt = f"""DEBUG KEYS
+Change Gravity: P - Up | Semicolon - Down
 Move Camera: IJKL - Move the camera offset
 Lock/unlock camera: B - Stops player from moving camera
 OTHER INFO
 Mouse Position: X: {pygame.mouse.get_pos()[0]}, Y:{pygame.mouse.get_pos()[1]}
 Camera Offset: X: {camera['x']}, Y: {camera["y"]}
 Player Position: X: {player.x}, Y: {player.y}
+Gravity: {player.gravity}
 """
-                    txtSize = (500, 130)
+                    txtSize = (500, 160)
                     #bg = pygame.Surface(size)
                     pygame.draw.rect(screen, pygame.Color(30, 30, 30), (0, 50, txtSize[0], txtSize[1]))
                     #bg.set_alpha(0.5)
