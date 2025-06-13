@@ -25,7 +25,8 @@ This'll make a binary, but it (probably) wont have the images, so next, head int
 Next, add:
 ```python
 addedfiles = [
-    ("images", "images")
+    ("images", "images"),
+    ("version.txt", ".")
 ]
 ```
 
