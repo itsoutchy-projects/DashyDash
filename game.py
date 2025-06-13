@@ -163,8 +163,9 @@ try:
         screen.blit(text, (cent.x, cent.y))
         pygame.display.flip()
         waitUntilKey(pygame.K_SPACE)
-except:
+except Exception as e:
     logger.warn("Couldn't get latest version because player has no WiFi")
+    logger.error(f"Actual error: {e}")
 #endregion
 #else:
     #logger.warn("Couldn't get latest version because player has no WiFi")
@@ -178,6 +179,7 @@ while running:
         if e.type == pygame.WINDOWFOCUSLOST:
             focused = False
     if focused:
+        screen.fill("black")
         pygame.display.set_caption(f"{gameTitle} - {scene}")
         if scene == "MainMenu":
             screen.blit(menuBg, (0, 0))
@@ -235,7 +237,8 @@ while running:
                     # pythonn pleaseplsplspls before i tear this code apart D:
                     #g = objects[i]
                     pygame.draw.rect(screen, g.color, (g.x - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], g.width, g.height))
-                    print(((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and (player.y > g.y and player.y < g.y + g.height))
+                    if DEBUG:
+                        print(((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and (player.y > g.y and player.y < g.y + g.height))
                     if (player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width:
                         #if player.x + player_size > g.x:
                         if player.y > g.y and player.y < g.y + g.height:
@@ -264,7 +267,8 @@ while running:
                     if playerMovesCamera:
                         camera["x"] += player.speed
                 for g in objects:
-                    print(player.y < g.y or player.y + player_size > g.y)
+                    if DEBUG:
+                        print(player.y < g.y or player.y + player_size > g.y)
                     # (player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width
                     #(player.x + player_size > g.x or player.x < g.x + g.width) and (player.y < g.y or player.y + player_size > g.y)
                     if ((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and (player.y > g.y and player.y < g.y + g.height):

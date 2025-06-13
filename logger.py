@@ -38,7 +38,7 @@ def warn(msg : str):
     global log
     res = f"[{datetime.datetime.now().hour}:{datetime.datetime.now().minute}:{datetime.datetime.now().second}] WARN: {msg}"
     log += res + "\n"
-    print(res.replace("WARN", f"{colours['warn']}ERROR{bcolors.ENDC}"))
+    print(res.replace("WARN", f"{colours['warn']}WARN{bcolors.ENDC}"))
 
 def write():
     global log
