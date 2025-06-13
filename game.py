@@ -11,6 +11,7 @@ import sys
 import math
 import requests
 import webbrowser
+import github
 
 pygame.init()
 size = (1280, 720)
@@ -123,6 +124,11 @@ focused = True
 
 playerCamMovToggleWasPressed = False
 
+# replace these with the details of your repo
+# so the url would go {username}/{repo}
+username = "itsoutchy-projects"
+repo = "DashyDash"
+
 #region Update Checker
 def waitUntilKey(key, ucheck = True):
     while True:
@@ -135,9 +141,10 @@ def waitUntilKey(key, ucheck = True):
                 if event.key == key:
                     return
                 if event.key == pygame.K_LSHIFT and ucheck:
-                    webbrowser.open("https://github.com/itsoutchy-projects/DashyDash/tree/main")
+                    url = github.GetRelease(username, repo)["url"]
+                    webbrowser.open(url)
 
-verResp = requests.get("https://raw.githubusercontent.com/itsoutchy-projects/DashyDash/refs/heads/main/version.txt")
+verResp = requests.get(f"https://raw.githubusercontent.com/{username}/{repo}/refs/heads/main/version.txt")
 githubVer = str(verResp._content).removeprefix("b'").removesuffix("'")
 localVer = ""
 with open("version.txt") as f:
