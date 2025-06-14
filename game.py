@@ -14,6 +14,7 @@ import webbrowser
 import github
 import pathlib
 import network_utils
+import static_values
 
 if getattr(sys, 'frozen', False):
     os.chdir(pathlib.Path(__file__).parent)
@@ -26,7 +27,7 @@ running = True
 
 player = Player(200, 500)
 
-jumpHeight = 6
+jumpHeight = 12
 
 jumpJustPressed = False # jump has not been held down
 
@@ -147,8 +148,10 @@ def waitUntilKey(key, ucheck = True):
                 if event.key == key:
                     return
                 if event.key == pygame.K_LSHIFT and ucheck:
-                    url = github.GetRelease(username, repo)["url"]
+                    url = f"https://github.com/{username}/{repo}/releases/latest"
+                    #print(url)
                     webbrowser.open(url)
+                    return
 
 #if network_utils.hasConnection(): # no need, we good
 try:
@@ -170,6 +173,21 @@ except Exception as e:
 #else:
     #logger.warn("Couldn't get latest version because player has no WiFi")
 
+def changeScene(name):
+    global scene
+    alpha = 0
+    fadeDuration = 500 # idk what this is in.. ;-;
+    fading = True
+    while fading:
+        newSurf = pygame.Surface(size)
+        newSurf.fill("black")
+        newSurf.set_alpha(alpha)
+        screen.blit(newSurf)
+        alpha += 255 / fadeDuration
+        if alpha >= 255:
+            fading = False
+    scene = name
+
 while running:
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
@@ -190,7 +208,7 @@ while running:
             
             play.draw()
             if play.onPressed:
-                scene = "Game" # switch to game (or level select)
+                changeScene("Game")
                 play.onPressed = False
         elif scene == "Game":
             # game scene
@@ -215,7 +233,7 @@ while running:
                 groundX = ScreenCenter(screen, ground_img, "x").x
                 screen.blit(ground_img, (groundX - camera["x"] - sceneOff["x"], window["height"] - groundHeight - camera["y"] - sceneOff["y"]))
 
-                player.velocity -= player.gravity
+                player.velocity -= player.gravity * static_values.deltatime
                 player.updatePhysics()
                 if playerMovesCamera:
                     camera["y"] -= player.velocity
@@ -238,10 +256,28 @@ while running:
                     #g = objects[i]
                     pygame.draw.rect(screen, g.color, (g.x - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], g.width, g.height))
                     if DEBUG:
-                        print(((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and (player.y > g.y and player.y < g.y + g.height))
+                        scaleDots = 10
+                        print(f"{((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and (player.y > g.y and player.y < g.y + g.height)} for {i}")
+                        pygame.draw.rect(screen, "white", (g.x - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], scaleDots + 6, scaleDots + 6))
+                        pygame.draw.rect(screen, "white", (g.x - camera["x"] - sceneOff["x"], g.y + g.height - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
+                        pygame.draw.rect(screen, "white", (g.x + g.width - camera["x"] - sceneOff["x"], g.y + g.height - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
+                        pygame.draw.rect(screen, "white", (g.x + g.width - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
                     if (player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width:
+                        if DEBUG:
+                            scaleDots = 20
+                            pygame.draw.rect(screen, "white", (g.x - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], scaleDots + 6, scaleDots + 6))
+                            pygame.draw.rect(screen, "white", (g.x - camera["x"] - sceneOff["x"], g.y + g.height - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
+                            pygame.draw.rect(screen, "white", (g.x + g.width - camera["x"] - sceneOff["x"], g.y + g.height - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
+                            pygame.draw.rect(screen, "white", (g.x + g.width - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
                         #if player.x + player_size > g.x:
+                        print(f"{i} is {player.y > g.y and player.y < g.y + g.height}")
                         if player.y > g.y and player.y < g.y + g.height:
+                            if DEBUG:
+                                scaleDots = 30
+                                pygame.draw.rect(screen, "white", (g.x - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], scaleDots + 6, scaleDots + 6))
+                                pygame.draw.rect(screen, "white", (g.x - camera["x"] - sceneOff["x"], g.y + g.height - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
+                                pygame.draw.rect(screen, "white", (g.x + g.width - camera["x"] - sceneOff["x"], g.y + g.height - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
+                                pygame.draw.rect(screen, "white", (g.x + g.width - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], scaleDots, scaleDots))
                             print(f"collision detecting platform {i}")
                             logger.message("touching box :D")
                             player.y -= player.velocity
@@ -249,6 +285,7 @@ while running:
                                 camera["y"] += player.velocity
                             player.velocity = 0
                             touchingGround = True
+                        print(f"did it even get here??? for {i}")
                     i += 1
                 #print(touchingGround)
                 keys = pygame.key.get_pressed()
@@ -259,41 +296,44 @@ while running:
                 else:
                     jumpJustPressed = False
                 if keybinds.GetKeysPressed(keybinds.move_left):
-                    player.x -= player.speed
+                    player.x -= player.speed * static_values.deltatime
                     if playerMovesCamera:
-                        camera["x"] -= player.speed
+                        camera["x"] -= player.speed * static_values.deltatime
                 if keybinds.GetKeysPressed(keybinds.move_right):
-                    player.x += player.speed
+                    player.x += player.speed * static_values.deltatime
                     if playerMovesCamera:
-                        camera["x"] += player.speed
+                        camera["x"] += player.speed * static_values.deltatime
+                gobjedhwIDX = 0
                 for g in objects:
                     if DEBUG:
                         print(player.y < g.y or player.y + player_size > g.y)
+                    print(gobjedhwIDX)
                     # (player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width
                     #(player.x + player_size > g.x or player.x < g.x + g.width) and (player.y < g.y or player.y + player_size > g.y)
-                    if ((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and (player.y > g.y and player.y < g.y + g.height):
+                    if ((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and ((player.y > g.y and player.y < g.y + g.height) or ((player.y < g.y + g.height and player.y < g.y + g.height))):
                     #if player.x > g.x and player.x < g.x + g.width:
                             logger.message("horizontal collision! :D")
-                            player.x -= player.speed
+                            player.x -= player.speed * static_values.deltatime
                             if playerMovesCamera:
-                                camera["x"] -= player.speed
-                            if ((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and player.y > g.y and player.y < g.y + g.height:
-                                player.x += player.speed * 2 # move out to compensate
+                                camera["x"] -= player.speed * static_values.deltatime
+                            if ((player.x > g.x or player.x + player_size > g.x) and player.x < g.x + g.width) and ((player.y > g.y and player.y < g.y + g.height) or ((player.y < g.y + g.height and player.y < g.y + g.height))):
+                                player.x += player.speed * static_values.deltatime * 2 # move out to compensate
                                 if playerMovesCamera:
-                                    camera["x"] += player.speed * 2
+                                    camera["x"] += player.speed * static_values.deltatime * 2
+                    gobjedhwIDX += 1
                 if DEBUG:
                     if keys[pygame.K_p]:
                         player.gravity += 0.01
                     if keys[pygame.K_SEMICOLON]:
                         player.gravity -= 0.01
                     if keys[pygame.K_j]:
-                        camera["x"] -= player.speed
+                        camera["x"] -= player.speed * static_values.deltatime
                     if keys[pygame.K_l]:
-                        camera["x"] += player.speed
+                        camera["x"] += player.speed * static_values.deltatime
                     if keys[pygame.K_i]:
-                        camera["y"] -= player.speed
+                        camera["y"] -= player.speed * static_values.deltatime
                     if keys[pygame.K_k]:
-                        camera["y"] += player.speed
+                        camera["y"] += player.speed * static_values.deltatime
                     scale = (10, 10)
                     pygame.draw.rect(screen, "white", ((screen.get_width() / 2) - scale[0], (screen.get_height() / 2) - scale[1], scale[0], scale[1]))
                     if keys[pygame.K_b]:
@@ -347,6 +387,6 @@ Gravity: {player.gravity}
                 running = False
 
         pygame.display.flip()
-    clock.tick(fps)
+    static_values.deltatime = clock.tick(fps) / 1000
 
 pygame.quit()
