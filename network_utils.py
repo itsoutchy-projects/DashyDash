@@ -42,6 +42,9 @@ def networks():
             names.append(i)
     return names
 
+# you can also just use a try statement and catch the error.
+# success: you have a connection
+# error: you dont have a connection
 def hasConnection():
     """
     Tries to send a get request, if it fails it returns false
