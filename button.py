@@ -10,12 +10,14 @@ class Button:
     height = 100
     hovered = False
     pressed = False
+    outlineThickness = 10
+    outline = pygame.Color(0, 0, 0)
 
     onPressed = False # use an if statement to detect this event
 
     font:pygame.font.Font
 
-    def __init__(self, surface : pygame.Surface, text : str, color : pygame.Color, pos : tuple[int, int], width : int, height : int):
+    def __init__(self, surface : pygame.Surface, text : str, color : pygame.Color, pos : tuple[int, int], width : int, height : int, outlineThickness = 10, outline = pygame.Color(0, 0, 0)):
         self.surface = surface
         self.text = text
         self.color = color
@@ -23,6 +25,8 @@ class Button:
         self.width = width
         self.height = height
         self.font = pygame.font.Font(pygame.font.get_default_font(), 70)
+        self.outlineThickness = outlineThickness
+        self.outline = outline
 
     def draw(self):
         col = self.color
@@ -45,7 +49,9 @@ class Button:
         else:
             self.pressed = False
             self.onPressed = False
+        pygame.draw.rect(self.surface, self.outline, (self.pos[0] - (self.outlineThickness / 2), self.pos[1] - (self.outlineThickness / 2), self.width + self.outlineThickness, self.height + self.outlineThickness))
         pygame.draw.rect(self.surface, col, (self.pos[0], self.pos[1], self.width, self.height))
         txt = self.font.render(self.text, True, "black")
         #textPos = (self.pos[0] + (self.width / 2), (self.pos[1] / 2) + (self.font.size(self.text)[1] / 2))
-        self.surface.blit(txt, self.pos)
+        textPos = ((self.pos[0] + (self.width / 2)) - (self.font.size(self.text)[0] / 2), (self.pos[1] + (self.height / 2)) - (self.font.size(self.text)[1] / 2))
+        self.surface.blit(txt, textPos)
