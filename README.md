@@ -9,12 +9,7 @@ This game is made in Python, so all you really have to do is install python and 
 
 You can just play it using the copy of Python you installed earlier, but if you want to make a binary, read more.
 
-Start off by running the command of your choice below:
-If you want only one file, run this:
-```
-pyinstaller game.py --onefile
-```
-Otherwise just run:
+Start off by running the command below:
 ```
 pyinstaller game.py
 ```
@@ -34,3 +29,7 @@ Then finally, under `a = Analysis()`, find the line `datas=[]`, replace it with:
 ```python
 datas=addedfiles
 ```
+
+## KNOWN BUGS
+- [ ] Only first platform is collideable
+  - Might need some extra help with this one, been going at this for AGES
