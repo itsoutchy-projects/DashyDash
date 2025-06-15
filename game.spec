@@ -2,7 +2,8 @@
 
 addedfiles = [
     ("images", "images"),
-    ("version.txt", ".")
+    ("version.txt", "."),
+    ("sounds", "sounds")
 ]
 
 a = Analysis(
