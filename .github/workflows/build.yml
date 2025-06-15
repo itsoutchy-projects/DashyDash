@@ -5,12 +5,8 @@ on:
 #    branches: master
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ['windows-latest', 'ubuntu-latest', 'macos-latest']
+  build-windows:
+    runs-on: windows-2019
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -25,24 +21,9 @@ jobs:
       - name: Run PyInstaller
         run: |
           python -m PyInstaller game.spec
-      
-      - name: Build Artifact (windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: windows-executables
-          path: dist/game/
-      - name: Build Artifact (linux)
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-executables
-          path: dist/game/
-      - name: Build Artifact (macos)
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-executables
+          name: Windows_Game
           path: dist/game/
       - name: Zip Release
         run: |
