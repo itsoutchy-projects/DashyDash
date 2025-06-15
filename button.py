@@ -17,7 +17,7 @@ class Button:
 
     font:pygame.font.Font
 
-    def __init__(self, surface : pygame.Surface, text : str, color : pygame.Color, pos : tuple[int, int], width : int, height : int, outlineThickness = 10, outline = pygame.Color(0, 0, 0)):
+    def __init__(self, surface : pygame.Surface, text : str, color : pygame.typing.ColorLike, pos : tuple[int, int], width : int, height : int, outlineThickness = 10, outline : pygame.typing.ColorLike = pygame.Color(0, 0, 0)):
         self.surface = surface
         self.text = text
         self.color = color
