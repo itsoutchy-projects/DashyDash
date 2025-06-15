@@ -15,19 +15,21 @@ import github
 import pathlib
 import network_utils
 import static_values
+import datetime
 
 if getattr(sys, 'frozen', False):
     os.chdir(pathlib.Path(__file__).parent)
 
 pygame.init()
 size = (1280, 720)
-screen = pygame.display.set_mode(size)
+actualWindowSize = (1280, 720)
+screen = pygame.display.set_mode(actualWindowSize)
 
 running = True
 
 player = Player(200, 500)
 
-jumpHeight = 12
+jumpHeight = 750
 
 jumpJustPressed = False # jump has not been held down
 
@@ -46,6 +48,9 @@ clock = pygame.time.Clock()
 
 play = Button(screen, "PLAY", pygame.Color(255, 255, 255), ((screen.get_width() / 2) - 250, 500), 500, 100)
 
+playerImg = loaders.Image.Load("player.png")
+player_rect = playerImg.get_rect()
+
 ground_img = loaders.Image.Load("ground.png")
 ground_rect = ground_img.get_rect()
 
@@ -54,13 +59,30 @@ groundHeight = ground_img.get_height() # orig: 100
 bg = loaders.Image.Load("bg.png")
 bg_rect = ground_img.get_rect()
 
+pygame.mixer.init()
+gameBg = pygame.mixer.music.load(os.path.join("sounds", "music", "bg_mystery_night.mp3"))
+
 fpsFont = pygame.font.Font(pygame.font.get_default_font(), 16)
 exitFont = pygame.font.Font(pygame.font.get_default_font(), 32)
 
-fps = 60
+fps = 120
 heldFrames = 0
 
 exitAlpha = 255
+
+def debugger_is_active() -> bool:
+    """Return if the debugger is currently active"""
+    if 'pdb' in sys.modules:
+        return True
+    elif 'IPython' in sys.modules:
+        return True
+    elif 'pydevd' in sys.modules:
+        return True
+    elif 'ptvsd' in sys.modules:
+        return True
+    elif 'PYDEVD_LOAD_VALUES_ASYNC' in os.environ:
+        return True
+    return False
 
 DEBUG = False
 # if true, enables debugging features
@@ -69,6 +91,8 @@ DEBUG = False
 if len(sys.argv) > 1:
     if sys.argv[1] == "--debug":
         DEBUG = True
+#if debugger_is_active():
+    #DEBUG = True
 
 class coord:
     x:int
@@ -80,7 +104,8 @@ class coord:
 
 camera = {
     "x": 0,
-    "y": 0
+    "y": 0,
+    "zoom": 1
 }
 
 def ScreenCenter(screen : pygame.Surface, img : pygame.Surface, axis : str = "xy") -> coord:
@@ -106,11 +131,11 @@ sceneOff = {
 class GameObject:
     x = 0
     y = 0
-    color = "#2c0070"
+    color:pygame.typing.ColorLike = "#2c0070"
     width = 500
     height = 250
 
-    def __init__(self, x : int, y : int, color = "#2c0070", width = 400, height = 100):
+    def __init__(self, x : int, y : int, color:pygame.typing.ColorLike = "#2c0070", width = 400, height = 100):
         self.x = x
         self.y = y
         self.color = color
@@ -173,6 +198,9 @@ except Exception as e:
 #else:
     #logger.warn("Couldn't get latest version because player has no WiFi")
 
+musicLooping = True
+musicPlaying = False
+
 def changeScene(name):
     global scene
     alpha = 0
@@ -187,6 +215,28 @@ def changeScene(name):
         if alpha >= 255:
             fading = False
     scene = name
+    if name == "Game":
+        loops = 0
+        if musicLooping:
+            loops = -1
+        if shouldAudioPlay:
+            pygame.mixer.music.play(loops)
+            global musicPlaying
+            musicPlaying = True
+
+mouseScrollDelta = 1
+
+fullscreened = False
+
+prevWIndowSize = actualWindowSize
+
+shouldAudioPlay = True
+
+debugStrCaption = ""
+if DEBUG:
+    debugStrCaption = " [DEBUG]"
+
+shotSurf:pygame.Surface
 
 while running:
     for e in pygame.event.get():
@@ -194,11 +244,43 @@ while running:
             running = False
         if e.type == pygame.WINDOWFOCUSGAINED:
             focused = True
+            if musicPlaying and shouldAudioPlay:
+                loops = 0
+                if musicLooping:
+                    loops = -1
+                pygame.mixer.music.play(loops)
         if e.type == pygame.WINDOWFOCUSLOST:
             focused = False
+            if musicPlaying and shouldAudioPlay:
+                pygame.mixer.music.pause()
+        if e.type == pygame.MOUSEWHEEL:
+            mouseScrollDelta = e.y
     if focused:
+        if not fullscreened:
+            actualWindowSize = pygame.display.get_window_size()
+        justPressedKeys = pygame.key.get_just_pressed()
+        if justPressedKeys[pygame.K_F2]:
+            if not os.path.exists("screenshots"):
+                os.mkdir("screenshots")
+            now = datetime.datetime.now()
+            pathScreenshot = f"screenshots/screenshot {now.day}-{now.month}-{now.year} {now.hour}-{now.minute}-{now.second}.png"
+            pygame.image.save(screen, pathScreenshot)
+            logger.message(f"Saved your screenshot to {pathScreenshot}")
+            scaledownby = 4
+            shotSurf = pygame.transform.scale(screen, (int(size[0] / scaledownby), int(size[1] / scaledownby)))
+        if justPressedKeys[pygame.K_f]:
+            if not fullscreened:
+                prevWIndowSize = actualWindowSize
+                disp = pygame.display.get_desktop_sizes()[0]
+                size = disp
+                actualWindowSize = disp
+            else:
+                size = (1280, 720)
+                actualWindowSize = prevWIndowSize
+            fullscreened = not fullscreened
+            pygame.display.toggle_fullscreen()
         screen.fill("black")
-        pygame.display.set_caption(f"{gameTitle} - {scene}")
+        pygame.display.set_caption(f"{gameTitle} - {scene}{debugStrCaption}")
         if scene == "MainMenu":
             screen.blit(menuBg, (0, 0))
             logCentered = ScreenCenter(screen, logo, "x")
@@ -228,7 +310,10 @@ while running:
                 bg_rect.y = bgOffsetDefault["y"] - (camera["y"] / slowness)
                 screen.blit(bg, bg_rect)
                 #pygame.draw.rect(screen, pygame.Color(0, 0, 0, 80), (player.x + shadow_offset, pygame.display.get_window_size()[1] - player.y, 100, 100))
-                pygame.draw.rect(screen, "blue", (player.x - camera["x"] - sceneOff["x"], window["height"] - player.y - camera["y"] - sceneOff["y"], player_size, player_size)) # draw player
+                if DEBUG:
+                    pygame.draw.rect(screen, "white", (player.x, window["height"] - player.y, player_size, player_size))
+                screen.blit(playerImg, (player.x - camera["x"] - sceneOff["x"], window["height"] - player.y - camera["y"] - sceneOff["y"]))
+                #pygame.draw.rect(screen, "blue", (player.x - camera["x"] - sceneOff["x"], window["height"] - player.y - camera["y"] - sceneOff["y"], player_size, player_size)) # draw player
                 # pygame.draw.rect(screen, "red", (0, window["height"] - groundHeight, window["width"], groundHeight))
                 groundX = ScreenCenter(screen, ground_img, "x").x
                 screen.blit(ground_img, (groundX - camera["x"] - sceneOff["x"], window["height"] - groundHeight - camera["y"] - sceneOff["y"]))
@@ -254,6 +339,8 @@ while running:
                     # why is it only doing the first one???????????????????????????????????????????????????????????
                     # pythonn pleaseplsplspls before i tear this code apart D:
                     #g = objects[i]
+                    if DEBUG:
+                        pygame.draw.rect(screen, "white", (g.x, g.y, g.width, g.height))
                     pygame.draw.rect(screen, g.color, (g.x - camera["x"] - sceneOff["x"], g.y - camera["y"] - sceneOff["y"], g.width, g.height))
                     if DEBUG:
                         scaleDots = 10
@@ -291,7 +378,7 @@ while running:
                 keys = pygame.key.get_pressed()
                 if keybinds.GetKeysPressed(keybinds.jump) and touchingGround:
                     if not jumpJustPressed:
-                        player.velocity = jumpHeight
+                        player.velocity = jumpHeight * static_values.deltatime
                         jumpJustPressed = True
                 else:
                     jumpJustPressed = False
@@ -368,10 +455,10 @@ Gravity: {player.gravity}
                     txt = exitFont.render("EXITTING...", True, "white")
                     txt.set_alpha(exitAlpha)
                     screen.blit(txt, (0, 16))
-                    if heldFrames == 5 * fps:
+                    if heldFrames == 3 * fps:
                         running = False
                     heldFrames += 1
-                    logger.message(f"exitAlpha: {10 / (5 * fps)}")
+                    logger.message(f"exitAlpha: {10 / (3 * fps)}")
                     # math.ceil(100 / (5 * fps)) # thrown here in case you wanna use it. i couldnt figure it out
                     exitAlpha -= 1
                     if exitAlpha < 0:
@@ -381,11 +468,35 @@ Gravity: {player.gravity}
                     heldFrames = 0
                     exitAlpha = 255
                 #shader.render(display) #Render the display onto the OpenGL display with the shaders!
-                pygame.display.flip()
+                # buggy camera zoom feature, error: invalid rectstyle argument
+                #if DEBUG:
+                #    camera["zoom"] += mouseScrollDelta
+                #zoomed = screen.subsurface((size[0] * camera["zoom"], size[1] * camera["zoom"]))
+                #screen.blit(pygame.transform.scale(camera["zoom"], size))
+                #if not actualWindowSize == size:
+                #    scaled = pygame.transform.scale(screen, size)
+                #    screen.fill("black")
+                #    screen.blit(scaled, ((actualWindowSize[0] / 2) - (size[0] / 2), (actualWindowSize[1] / 2) - (size[1] / 2)))
+                #pygame.display.flip()
             except Exception as e:
                 logger.crash(e)
                 running = False
-
+        try:
+            alphaShot = shotSurf.get_alpha()
+            print(alphaShot)
+            #borderSize = 5
+            #pygame.draw.rect(shotSurf, "white", (0, 0, shotSurf.get_width() + borderSize, shotSurf.get_height() + borderSize))
+            if not alphaShot == 0 and not alphaShot == None:
+                alphaShot -= 1
+            elif alphaShot == None:
+                alphaShot = 255
+            elif alphaShot == 0:
+                shotSurf = None # shouldnt blit a screenshot thats already faded
+            shotSurf.set_alpha(alphaShot)
+            screen.blit(shotSurf)
+        except:
+            # just dont blit it. we probably removed the screenshot by now.. or we havent taken a screenshot yet
+            pass
         pygame.display.flip()
     static_values.deltatime = clock.tick(fps) / 1000
 
